@@ -302,6 +302,7 @@ def interpret_file(asm_file: str, c_file: str) -> None:
         r"([\w\d]+.*) ([\+\-])= 1([;,)])", r"\1\2\2\3", c_file_content
     )
     c_file_content = re.sub(r"([\w\d]+.*) = \1 ([\+\-]) 1;", r"\1\2\2;", c_file_content)
+    c_file_content = re.sub(r'PS(VEC|MTX)', r'\1', c_file_content)
 
     g.write(c_file_content)
     g.truncate()

@@ -2,7 +2,7 @@
 
 Matching decompilation of Mario Party 5 targeting the USA Release build (`GP5E01_00`).
 The goal is to produce C (some files C++) source that compiles to byte-identical object code against the
-original retail binary using the original MWCC compiler.
+original retail binary using the original C88 MWCC compiler.
 
 ## Build & Verify
 
@@ -151,7 +151,7 @@ to natural C/C++, the more likely it is to match.
 
 DON'T ADD EXPLANATIVE TO THE CODE WHEN DECOMPILING other than the objdata and inline usage which you should also get rid of by the end.  
 
-DON'T LABEL things on your own, keep the original variable names.
+DON'T LABEL things on your own, keep the original variable and member names.
 
 ### Final stages
 m2c auto-generates lots of struct definitions which are the same, you should get rid of the unnecessary/duplicate ones.
