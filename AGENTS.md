@@ -151,6 +151,8 @@ to natural C/C++, the more likely it is to match.
 
 DON'T ADD EXPLANATIVE TO THE CODE WHEN DECOMPILING other than the objdata and inline usage which you should also get rid of by the end.  
 
+DON'T LABEL things on your own, keep the original variable names.
+
 ### Final stages
 m2c auto-generates lots of struct definitions which are the same, you should get rid of the unnecessary/duplicate ones.
 
