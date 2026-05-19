@@ -144,7 +144,7 @@ if not config.non_matching:
 config.binutils_tag = "2.42-1"
 config.compilers_tag = "20240706"
 config.dtk_tag = "v1.5.1"
-config.objdiff_tag = "v2.7.1"
+config.objdiff_tag = "v3.7.1"
 config.sjiswrap_tag = "v1.2.0"
 config.wibo_tag = "0.6.11"
 
@@ -2050,6 +2050,40 @@ config.libs = [
         },
     ),
 ]
+
+# Custom build step for clankers
+config.custom_build_rules = [
+    {
+        "name": "source_guard",
+        "command": f"$python tools/source_guard.py $in $out",
+        "description": "GUARD $in",
+    }
+]
+
+precompile_steps = []
+
+rel_files: list[Path] = [
+    Path("src") / object.name
+    for lib in config.libs
+    for object in lib["objects"]
+    if object.name.startswith("REL")
+]
+
+rel_files = [p for p in rel_files if p.exists()]
+
+for src_path in rel_files:
+    guard_stamp = config.out_path() / "source_guard" / f"{str(src_path).replace("/", "_")}.ok"
+    precompile_steps.append(
+        {
+            "rule": "source_guard",
+            "inputs": str(src_path),
+            "outputs": str(guard_stamp),
+            "implicit": "tools/source_guard.py",
+        }
+    )
+
+config.custom_build_steps = {"pre-compile": precompile_steps}
+
 
 if args.mode == "configure":
     # Write build.ninja and objdiff.json
