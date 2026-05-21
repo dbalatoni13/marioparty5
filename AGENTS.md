@@ -140,7 +140,7 @@ Matching can be tricky — be patient and methodical. Try many different ways of
 
 ### Compiler behavior
 
-The game was compiled using no optimizations other than inlining and jumptables for switch statements. On PowerPC this means that unless the function is too large and there are no free registers left: the stack is only used for arrays, structs, the result of ternaries, and temporaries/return values of inlined functions.
+The game was compiled using no optimizations other than inlining and jumptables for switch statements. On PowerPC this means that unless the function is too large and there are no free registers left: the stack is only used for arrays, structs, variables that are only written to and never read from, the result of ternaries, and temporaries/return values of inlined functions.
 
 The m2c output can often be missing case labels in switch statements which are necessary to match the function.
 
