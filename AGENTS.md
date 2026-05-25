@@ -134,6 +134,8 @@ Really try to make stack and global arrays have the correct size. If you absolut
 
 Instead of casting function pointers to functions whose signature we are not sure about, try to change the function's signature if that still matches. For example don't cast a function to `OMOBJFUNC` if you can make it take an `OMOBJ*` as an argument.
 
+Try to use `void *` as little as possible, both for global and local variables, so if all usage indicates it having a certain type, make it point to that type. 
+
 Never dismiss a diff as "close enough" or "just register allocation." Every mismatched
 instruction is a signal that the source doesn't perfectly represent the original. Even
 the most stubborn mismatches can be resolved through careful analysis, lateral thinking, and
@@ -164,6 +166,6 @@ m2c auto-generates lots of struct definitions which are the same, you should get
 
 To match the data, especially string constants, it's important that they occur in the correct order.
 
-To link an object file, it's necessary that the functions are in the correct order. m2c does this by default, so you shouldn't mess it up accidentally. 
+To link an object file, it's necessary that the global variables and functions are in the correct order. m2c should do this by default, but at the end you should make sure it's correct. 
 
 Stop the decompilation process if 98% matching has been reached and no significant progress has been made in a while. Before you stop completely, verify that the code fulfills our guides.
