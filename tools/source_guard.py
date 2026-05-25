@@ -17,7 +17,7 @@ ASM_REGEX = re.compile(r"\basm\b")
 REGISTER_REGEX = re.compile(r"\bregister\b")
 VOLATILE_REGEX = re.compile(r"\bvolatile\b")
 DECLSPEC_SECTION_REGEX = re.compile(r"__declspec\s*\(\s*section.*")
-FLOAT_GLOBAL_REGEX = re.compile(r"(float|double)\s+lbl_1_rodata.*=\s*\d+.*;")
+FLOAT_GLOBAL_REGEX = re.compile(r"(f32|f64|float|double)\s+lbl_1_rodata_[0-9A-F]+\s*(\[1\])?\s*=\s*\d+.*;")
 
 RAW_POINTER_ERROR = (
     "Access of struct fields through raw pointer math is not allowed. Don't try to rewrite it in a "
