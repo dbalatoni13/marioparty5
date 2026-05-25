@@ -159,3 +159,5 @@ m2c auto-generates lots of struct definitions which are the same, you should get
 To match the data, especially string constants, it's important that they occur in the correct order.
 
 To link an object file, it's necessary that the functions are in the correct order. m2c does this by default, so you shouldn't mess it up accidentally. 
+
+Stop if 98% matching has been reached and no significant progress has been made in a while.
