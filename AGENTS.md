@@ -138,6 +138,8 @@ Try to use `void *` as little as possible, both for global and local variables, 
 
 Local variables should be declared in a register-descending order, var_r31, var_r30, var_r29, etc., same for float variables. Variables on the stack should be ordered from highest to lowest address. It's sometimes necessary to move the lowest ones to scopes lower down in the code due to temporaries (generated as mentioned earlier) getting into the way.
 
+If a global array is used as a Vec or Vec2f in the code, you should type the variable accordingly and convert the hex values to proper floats. 
+
 Never dismiss a diff as "close enough" or "just register allocation." Every mismatched
 instruction is a signal that the source doesn't perfectly represent the original. Even
 the most stubborn mismatches can be resolved through careful analysis, lateral thinking, and
