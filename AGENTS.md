@@ -114,9 +114,9 @@ When asked to decompile a C/C++ board/minigame, start by looking up `configure.p
 
 Your goal is to match the data and functions to 100%. You are only asked to decompile RELs.
 
-A common pattern the developers used is passing around a struct called `OMOBJ` and assigning custom data to its `data` field. The first thing you should do is track down how these are allocated/assigned and create structs for the data using the M<minigame number>Struct<index> for minigames, for example M501Struct2, or MB<board number>Struct<index> for boards. Once you've created the empty structs, annotate - functions that receive OMOBJ - (using a comment) what struct their data corresponds to. The objFunc field will help you in the process. Sometimes `OMOBJ` is saved into global variables.
+A common pattern the developers used is passing around a struct called `OMOBJ` and assigning custom data to its `data` field. The first thing you should do is track down how these are allocated/assigned and create structs for the data using the `M<minigame number>Struct<index>` pattern for minigames, for example `M501Struct2`, or `MB<board number>Struct<index>` for boards. Once you've created the empty structs, annotate - functions that receive `OMOBJ` - (using a comment) what struct their data corresponds to. The `objFunc` field will help you in the process. Sometimes `OMOBJ` is saved into global variables.
 
-This game contains lots of places where regular functions get inlined, but it's restricted in the direction: the inlined function has to be _defined_ above the caller. It would be a good idea to start by recognizing huge inlined code chunks and annotating them call-sites using comments to avoid extra work later. 
+This game contains lots of places where regular functions get inlined, but it's restricted in the direction: the inlined function has to be _defined_ above the caller. It would be a good idea to start by recognizing huge inlined code chunks and annotating their call-sites using comments to avoid extra work later. 
 
 Then you should go through every function in the translation unit, get the functions to compile and match them to 100% according to objdiff. You should fill up the structs in the process using correct data types, offsets and sizes. Raw pointer math to access members isn't allowed. 
 
@@ -136,17 +136,13 @@ Instead of casting function pointers to functions whose signature we are not sur
 
 Try to use `void *` as little as possible, both for global and local variables, so if all usage indicates it having a certain type, make it point to that type. 
 
-Local variables should be declared in a register-descending order, var_r31, var_r30, var_r29, etc., same for float variables. Variables on the stack should be ordered from highest to lowest address. It's sometimes necessary to move the lowest ones to scopes lower down in the code due to temporaries (generated as mentioned earlier) getting into the way. Bss must be declared backwards which m2c already does for you.
+Local variables should be declared in a register-descending order, var_r31, var_r30, var_r29, etc., same for float variables. Variables on the stack should be ordered from highest to lowest address. It's sometimes necessary to move the lowest ones to scopes lower down in the code due to temporaries (generated as mentioned later) getting into the way. Bss must be declared backwards which m2c already does for you.
 
-If a global array is used as a Vec or Vec2f in the code, you should type the variable accordingly and convert the hex values to proper floats. 
+If a global array is used as a `Vec` or `Vec2f` in the code, you should type the variable accordingly and convert the hex values to proper floats. 
 
 It's really important that you use the `sqrtf` or `sqrt` (decide which one is correct in a particular case) inline from `include/math.h` if you encounter a call to `__frsqrte` and the code matches the pattern. Be aware that that inline is quite big.
 
-Never dismiss a diff as "close enough" or "just register allocation." Every mismatched
-instruction is a signal that the source doesn't perfectly represent the original. Even
-the most stubborn mismatches can be resolved through careful analysis, lateral thinking, and
-creative source-level permutations. It may take 10 iterations or 100, but the ultimate goal
-is to perfectly match the original code.
+Never dismiss a diff as "close enough" or "just register allocation." Every mismatched instruction is a signal that the source doesn't perfectly represent the original. Even the most stubborn mismatches can be resolved through careful analysis, lateral thinking, and creative source-level permutations. It may take 10 iterations or 100, but the ultimate goal is to perfectly match the original code.
 
 Matching can be tricky — be patient and methodical. Try many different ways of writing the same thing. Look for patterns elsewhere in the codebase. Only move on when you've exhausted concrete ideas, not when the match percentage is "high enough." When resolving issues, keep in mind that the overall matching percentage is not a clean indicator of whether a change was successful or not, as something that fixes a spot can lead to register swaps that dunk the percentage. You should consider this before discarding potential fixes too early.
 
@@ -160,16 +156,15 @@ The m2c output can often be missing case labels in switch statements which are n
 
 ### Always **humanize** code
 
-Most importantly: write code that a human would write. The original code was written by humans, so the closer your source is
-to natural C/C++, the more likely it is to match.
+Most importantly: write code that a human would write. The original code was written by humans, so the closer your source is to natural C/C++, the more likely it is to match.
 
-Use `NULL` instead of `0` when assigning to pointers. Always use `if (ptr)` or `if (!ptr)` in conditions instead of explicit NULL.
+Use `NULL` instead of `0` when assigning to pointers. Always use `if (ptr)` or `if (!ptr)` in conditions instead of explicit `NULL` if it matches.
 
 Try to use `sizeof` for allocation and flush calls instead of raw bytes. Leave a TODO comment if you can't figure it out.
 
-DON'T ADD EXPLANATIVE TO THE CODE WHEN DECOMPILING other than the objdata and inline usage which you should also get rid of by the end and the ones that this file explicitly told you about.  
+DON'T LEAVE EXPLANATIVE COMMENTS IN THE CODE WHEN DECOMPILING other than the ones that this file explicitly told you about.  
 
-DON'T LABEL things on your own, keep the original variable and member names.
+DON'T LABEL things on your own, keep the original variable and member names and `unk` members in structs.
 
 ### Final stages
 m2c auto-generates lots of struct definitions which are the same, you should get rid of the unnecessary/duplicate ones.
