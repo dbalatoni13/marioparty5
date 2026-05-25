@@ -178,6 +178,8 @@ Make sure to apply the macros from humath.h:
 #define HuAtan(y, x) (180.0*(atan2((y), (x)) / M_PI))
 ```
 
+Make sure to apply motion attribute macros from hu3d.h, you can recognize them by them being passed to Hu3D functions, they are of the form `0x4000XXXX`.
+
 ### Final stages
 m2c auto-generates lots of struct definitions which are the same, you should get rid of the unnecessary/duplicate ones.
 
@@ -185,4 +187,4 @@ To match the data, especially string constants, it's important that they occur i
 
 To link an object file, it's necessary that the global variables and functions are in the correct order. m2c should do this by default, but at the end you should make sure it's correct. 
 
-Stop the decompilation process if 98% matching has been reached and no significant progress has been made in a while. Before you stop completely, verify that the code fulfills our guides.
+Stop the decompilation process if 98% matching has been reached and no significant progress has been made in a while, especially if the problem is related to rodata order. Before you stop completely, verify that the code fulfills our guides.
