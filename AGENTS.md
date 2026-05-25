@@ -140,6 +140,8 @@ Local variables should be declared in a register-descending order, var_r31, var_
 
 If a global array is used as a Vec or Vec2f in the code, you should type the variable accordingly and convert the hex values to proper floats. 
 
+It's really important that you use the `sqrtf` or `sqrt` (decide which one is correct in a particular case) inline from `include/math.h` if you encounter a call to `__frsqrte` and the code matches the pattern. Be aware that that inline is quite big.
+
 Never dismiss a diff as "close enough" or "just register allocation." Every mismatched
 instruction is a signal that the source doesn't perfectly represent the original. Even
 the most stubborn mismatches can be resolved through careful analysis, lateral thinking, and

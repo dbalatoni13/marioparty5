@@ -125,12 +125,22 @@ def replace_attr_values(code: str) -> str:
         rest = match.group(2)
         value = parse_number(match.group(3))
 
-        array = MOTION_ATTR if value & 0x40000000 else ATTR
-        if value == 0:
-            res = [array[0]]
+        if function_name == "Hu3DModelAttrSet" and value == (1 << 0):
+            return f"Hu3DModelDispOff({rest});"
+        elif function_name == "Hu3DModelAttrReset" and value == (1 << 0):
+            return f"Hu3DModelDispOn({rest});"
+        elif function_name == "Hu3DModelAttrSet" and value == (1 << 1):
+            return f"Hu3DModelZWriteOff({rest});"
+        elif function_name == "Hu3DModelAttrReset" and value == (1 << 1):
+            return f"Hu3DModelZWriteOn({rest});"
         else:
-            res = [array[i] for i in range(1, len(array)) if value & (1 << (i - 1))]
-        return f"{function_name}({rest}, {' | '.join(res)});"
+            array = MOTION_ATTR if value & 0x40000000 else ATTR
+            if value == 0:
+                res = [array[0]]
+            else:
+                res = [array[i] for i in range(1, len(array)) if value & (1 << (i - 1))]
+                
+            return f"{function_name}({rest}, {' | '.join(res)});"
 
     code = re.sub(hu3d_pattern, replace_hu3d, code)
 
@@ -144,14 +154,20 @@ def replace_attr_values(code: str) -> str:
         rest = match.group(2)
         value = parse_number(match.group(3))
 
-        if value == -1:
-            res = [SPRITE_ATTR[0]]
+        if function_name == "HuSprAttrSet" and value == 4:
+            return f"HuSprDispOff({rest});"
+        elif function_name == "HuSprAttrReset" and value == 4:
+            return f"HuSprDispOn({rest});"
         else:
-            res = []
-            for i in range(1, len(SPRITE_ATTR)):
-                if value & (1 << (i - 1)):
-                    res.append(SPRITE_ATTR[i])
-        return f"{function_name}({rest}, {' | '.join(res)});"
+            if value == -1:
+                res = [SPRITE_ATTR[0]]
+            else:
+                res = []
+                for i in range(1, len(SPRITE_ATTR)):
+                    if value & (1 << (i - 1)):
+                        res.append(SPRITE_ATTR[i])
+
+            return f"{function_name}({rest}, {' | '.join(res)});"
 
     code = re.sub(sprite_pattern, replace_sprite, code)
 
@@ -162,13 +178,18 @@ def replace_wipe_values(code: str) -> str:
     wipe_pattern = re.compile(
         r"WipeCreate\((-?(?:0x)?[0-9a-fA-F]+),\s*(-?(?:0x)?[0-9a-fA-F]+),\s*(.*)\);"
     )
+    num_pattern = re.compile("(0x)?[0-9a-fA-F]+")
 
     def replace(match: re.Match[str]):
         mode = parse_number(match.group(1))
         wipe_type = parse_number(match.group(2))
-        duration = parse_number(match.group(3))
+        duration = match.group(3)
+        if re.fullmatch(num_pattern, duration):
+            duration = parse_number(duration)
 
-        return f"WipeCreate({WIPE_MODE[mode - 1]}, {WIPE_TYPE[wipe_type + 1]},{duration});"
+        wipe_type_out = WIPE_TYPE.get(wipe_type, wipe_type)
+
+        return f"WipeCreate({WIPE_MODE[mode - 1]}, {wipe_type_out},{duration});"
 
     code = re.sub(wipe_pattern, replace, code)
 
