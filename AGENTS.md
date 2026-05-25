@@ -155,7 +155,9 @@ The m2c output can often be missing case labels in switch statements which are n
 Most importantly: write code that a human would write. The original code was written by humans, so the closer your source is
 to natural C/C++, the more likely it is to match.
 
-Use `NULL` instead of `0` when dealing with pointers.
+Use `NULL` instead of `0` when assigning to pointers. Always use `if (ptr)` or `if (!ptr)` in conditions instead of explicit NULL.
+
+Try to use `sizeof` for allocation and flush calls instead of raw bytes. Leave a TODO comment if you can't figure it out.
 
 DON'T ADD EXPLANATIVE TO THE CODE WHEN DECOMPILING other than the objdata and inline usage which you should also get rid of by the end and the ones that this file explicitly told you about.  
 
