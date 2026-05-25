@@ -144,6 +144,8 @@ is to perfectly match the original code.
 
 Matching can be tricky — be patient and methodical. Try many different ways of writing the same thing. Look for patterns elsewhere in the codebase. Only move on when you've exhausted concrete ideas, not when the match percentage is "high enough." When resolving issues, keep in mind that the overall matching percentage is not a clean indicator of whether a change was successful or not, as something that fixes a spot can lead to register swaps that dunk the percentage. You should consider this before discarding potential fixes too early.
 
+You have certain guardrails, DON'T TRY TO CIRCUMVENT THEM. Admitting you can't match something is miles better than circumventing guardrails, especially the one about float constants.
+
 ### Compiler behavior
 
 The game was compiled using no optimizations other than inlining and jumptables for switch statements. On PowerPC this means that unless the function is too large and there are no free registers left: the stack is only used for arrays, structs, variables that are only written to and never read from, the result of ternaries, and temporaries/return values of inlined functions.
