@@ -136,7 +136,7 @@ Instead of casting function pointers to functions whose signature we are not sur
 
 Try to use `void *` as little as possible, both for global and local variables, so if all usage indicates it having a certain type, make it point to that type. 
 
-Local variables should be declared in a register-descending order, var_r31, var_r30, var_r29, etc., same for float variables. Variables on the stack should be ordered from highest to lowest address. It's sometimes necessary to move the lowest ones to scopes lower down in the code due to temporaries (generated as mentioned earlier) getting into the way.
+Local variables should be declared in a register-descending order, var_r31, var_r30, var_r29, etc., same for float variables. Variables on the stack should be ordered from highest to lowest address. It's sometimes necessary to move the lowest ones to scopes lower down in the code due to temporaries (generated as mentioned earlier) getting into the way. Bss must be declared backwards which m2c already does for you.
 
 If a global array is used as a Vec or Vec2f in the code, you should type the variable accordingly and convert the hex values to proper floats. 
 
@@ -169,21 +169,11 @@ DON'T ADD EXPLANATIVE TO THE CODE WHEN DECOMPILING other than the objdata and in
 
 DON'T LABEL things on your own, keep the original variable and member names.
 
-Make sure to apply the macros from humath.h:
-```
-#define HuSin(x) sin(M_PI*(x)/180.0)
-#define HuCos(x) cos(M_PI*(x)/180.0)
-#define HuTan(x) tan(M_PI*(x)/180.0)
-
-#define HuAtan(y, x) (180.0*(atan2((y), (x)) / M_PI))
-```
-
-Make sure to apply motion attribute macros from hu3d.h, you can recognize them by them being passed to Hu3D functions, they are of the form `0x4000XXXX`.
-
 ### Final stages
 m2c auto-generates lots of struct definitions which are the same, you should get rid of the unnecessary/duplicate ones.
 
-To match the data, especially string constants, it's important that they occur in the correct order.
+To match the data, especially string constants, it's important that they occur in the correct order. m2c additionally dumps strings as separate global
+variables, but you should get rid of those unless they are arrays that the code indexes into, otherwise just use the string literals in the functions.
 
 To link an object file, it's necessary that the global variables and functions are in the correct order. m2c should do this by default, but at the end you should make sure it's correct. 
 

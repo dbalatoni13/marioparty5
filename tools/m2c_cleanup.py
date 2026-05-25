@@ -1,7 +1,7 @@
 import sys
 import os
 import regex as re
-# from defines import DATADIR, WIPE_TYPE, WIPE_MODE, MOTION_ATTR, ATTR, SPRITE_ATTR
+from defines import WIPE_TYPE, WIPE_MODE, MOTION_ATTR, ATTR, SPRITE_ATTR, FLAGS
 
 
 def rc(s: str) -> str:
@@ -115,67 +115,82 @@ def parse_number(num: str) -> int:
 #     return code
 
 
-# def replace_attr_values(code: str) -> str:
-#     hu3d_pattern = re.compile(
-#         r"(Hu3DMotionShiftSet|Hu3DModelAttrSet|Hu3DModelAttrReset)\((.*),\s?((?:0x)?[0-9a-fA-F]+)\);"
-#     )
+def replace_attr_values(code: str) -> str:
+    hu3d_pattern = re.compile(
+        r"(Hu3DMotionShiftSet|Hu3DModelAttrSet|Hu3DModelAttrReset)\((.*),\s?((?:0x)?[0-9a-fA-F]+)\);"
+    )
 
-#     def replace_hu3d(match: re.Match[str]):
-#         function_name = match.group(1)
-#         rest = match.group(2)
-#         value = parse_number(match.group(3))
+    def replace_hu3d(match: re.Match[str]):
+        function_name = match.group(1)
+        rest = match.group(2)
+        value = parse_number(match.group(3))
 
-#         array = MOTION_ATTR if value & 0x40000000 else ATTR
-#         if value == 0:
-#             res = [array[0]]
-#         else:
-#             res = [array[i] for i in range(1, len(array)) if value & (1 << (i - 1))]
-#         return f"{function_name}({rest}, {' | '.join(res)});"
+        array = MOTION_ATTR if value & 0x40000000 else ATTR
+        if value == 0:
+            res = [array[0]]
+        else:
+            res = [array[i] for i in range(1, len(array)) if value & (1 << (i - 1))]
+        return f"{function_name}({rest}, {' | '.join(res)});"
 
-#     while re.search(hu3d_pattern, code):
-#         code = re.sub(hu3d_pattern, replace_hu3d, code)
+    code = re.sub(hu3d_pattern, replace_hu3d, code)
 
-#     # sprite
-#     sprite_pattern = re.compile(
-#         r"(HuSprAttrSet|HuSprAttrReset|espAttrSet|espAttrReset)\((.*),\s?((?:0x)?[0-9a-fA-F]+)\);"
-#     )
+    # sprite
+    sprite_pattern = re.compile(
+        r"(HuSprAttrSet|HuSprAttrReset|espAttrSet|espAttrReset)\((.*),\s?((?:0x)?[0-9a-fA-F]+)\);"
+    )
 
-#     def replace_sprite(match: re.Match[str]):
-#         function_name = match.group(1)
-#         rest = match.group(2)
-#         value = parse_number(match.group(3))
+    def replace_sprite(match: re.Match[str]):
+        function_name = match.group(1)
+        rest = match.group(2)
+        value = parse_number(match.group(3))
 
-#         if value == -1:
-#             res = [SPRITE_ATTR[0]]
-#         else:
-#             res = []
-#             for i in range(1, len(SPRITE_ATTR)):
-#                 if value & (1 << (i - 1)):
-#                     res.append(SPRITE_ATTR[i])
-#         return f"{function_name}({rest}, {' | '.join(res)});"
+        if value == -1:
+            res = [SPRITE_ATTR[0]]
+        else:
+            res = []
+            for i in range(1, len(SPRITE_ATTR)):
+                if value & (1 << (i - 1)):
+                    res.append(SPRITE_ATTR[i])
+        return f"{function_name}({rest}, {' | '.join(res)});"
 
-#     while re.search(sprite_pattern, code):
-#         code = re.sub(sprite_pattern, replace_sprite, code)
+    code = re.sub(sprite_pattern, replace_sprite, code)
 
-#     return code
+    return code
 
 
-# def replace_wipe_values(code: str) -> str:
-#     wipe_pattern = re.compile(
-#         r"WipeCreate\((-?(?:0x)?[0-9a-fA-F]+),\s*(-?(?:0x)?[0-9a-fA-F]+),(.*)\);"
-#     )
+def replace_wipe_values(code: str) -> str:
+    wipe_pattern = re.compile(
+        r"WipeCreate\((-?(?:0x)?[0-9a-fA-F]+),\s*(-?(?:0x)?[0-9a-fA-F]+),\s*(.*)\);"
+    )
 
-#     def replace(match: re.Match[str]):
-#         mode = parse_number(match.group(1))
-#         type = parse_number(match.group(2))
-#         duration = match.group(3)
+    def replace(match: re.Match[str]):
+        mode = parse_number(match.group(1))
+        wipe_type = parse_number(match.group(2))
+        duration = parse_number(match.group(3))
 
-#         return f"WipeCreate({WIPE_MODE[mode - 1]}, {WIPE_TYPE[type + 1]},{duration});"
+        return f"WipeCreate({WIPE_MODE[mode - 1]}, {WIPE_TYPE[wipe_type + 1]},{duration});"
 
-#     while re.search(wipe_pattern, code):
-#         code = re.sub(wipe_pattern, replace, code)
+    code = re.sub(wipe_pattern, replace, code)
 
-#     return code
+    return code
+
+def replace_flag_values(code: str) -> str:
+    wipe_pattern = re.compile(r"(_CheckFlag|_SetFlag|_ClearFlag)\((.*?)\)")
+
+    def replace(match: re.Match[str]):
+        function_name = match.group(1)
+        flag = parse_number(match.group(2))
+
+        index = flag >> 16
+        num = flag & 0xFFFF
+
+        out_str = FLAGS[index].get(num, flag)
+
+        return f"{function_name}({out_str})"
+
+    code = re.sub(wipe_pattern, replace, code)
+
+    return code
 
 
 def interpret_file(asm_file: str, c_file: str) -> None:
@@ -220,41 +235,61 @@ def interpret_file(asm_file: str, c_file: str) -> None:
         .replace("(bitwise double)", "")
         .replace("(bitwise double *)", "")
     )
-    # c_file_content = re.sub(
-    #     r"(sin|cos)\(\(3\.141592653589793 \* (.*)\) / 180\.0\)",
-    #     r"\1d(\2)",
-    #     c_file_content,
-    # )
-    # c_file_content = re.sub(
-    #     r"180\.0 \* \(atan2\((.*), (.*)\) / 3\.141592653589793\)",
-    #     r"atan2d(\1,\2)",
-    #     c_file_content,
-    # )
-    # c_file_content = re.sub(
-    #     r"Hu3DModelCreate\(HuDataSelHeapReadNum\((.*), 0x10000000, HEAP_DATA\)\)",
-    #     r"Hu3DModelCreateFile(\1)",
-    #     c_file_content,
-    # )
-    # c_file_content = re.sub(
-    #     r"HuSprAnimRead\(HuDataSelHeapReadNum\((.*), 0x10000000, HEAP_DATA\)\)",
-    #     r"HuSprAnimReadFile(\1)",
-    #     c_file_content,
-    # )
-    # c_file_content = re.sub(
-    #     r"Hu3DJointMotion\((.*), HuDataSelHeapReadNum\((.*), 0x10000000, HEAP_DATA\)\)",
-    #     r"Hu3DJointMotionFile(\1, \2)",
-    #     c_file_content,
-    # )
-    # c_file_content = re.sub(
-    #     r"HuMemDirectMallocNum\(HEAP_SYSTEM, (.*), 0x10000000\);",
-    #     r"HuMemDirectMallocNum(HEAP_SYSTEM, \1, MEMORY_DEFAULT_NUM);",
-    #     c_file_content,
-    # )
-    # c_file_content = re.sub(
-    #     r"if \(_CheckFlag\(0x1000C\) == 0\) {\n\s*\(GWPlayer \+ \(([0-9a-zA-Z_]+) \* 0x30\)\)->unk_28 = ([0-9a-z_]+);\n\s*}",
-    #     r"GWPlayerCoinWinSet(\1, \2);",
-    #     c_file_content,
-    # )
+    c_file_content = re.sub(
+        r"sin\(\(3\.141592653589793 \* (.*)\) / 180\.0\)",
+        r"HuSin(\1)",
+        c_file_content,
+    )
+    c_file_content = re.sub(
+        r"cos\(\(3\.141592653589793 \* (.*)\) / 180\.0\)",
+        r"HuCos(\1)",
+        c_file_content,
+    )
+    c_file_content = re.sub(
+        r"180\.0 \* \(atan2\((.*), (.*)\) / 3\.141592653589793\)",
+        r"HuAtan(\1,\2)",
+        c_file_content,
+    )
+    c_file_content = re.sub(
+        r"Hu3DModelCreate\(HuDataSelHeapReadNum\((.*), 0x10000000, HEAP_MODEL\)\)",
+        r"Hu3DModelCreateData(\1)",
+        c_file_content,
+    )
+    c_file_content = re.sub(
+        r"HuSprAnimRead\(HuDataSelHeapReadNum\((.*), 0x10000000, HEAP_MODEL\)\)",
+        r"HuSprAnimDataRead(\1)",
+        c_file_content,
+    )
+    c_file_content = re.sub(
+        r"Hu3DMotionCreate\(HuDataSelHeapReadNum\((.*), 0x10000000, HEAP_MODEL\)\)",
+        r"Hu3DMotionCreateData(\1)",
+        c_file_content,
+    )
+    c_file_content = re.sub(
+        r"Hu3DJointMotion\((.*), HuDataSelHeapReadNum\((.*), 0x10000000, HEAP_MODEL\)\)",
+        r"Hu3DJointMotionData(\1, \2)",
+        c_file_content,
+    )
+    c_file_content = re.sub(
+        r"HuMemDirectMallocNum\(HEAP_HEAP, (.*), 0x10000000\);",
+        r"HuMemDirectMallocNum(HEAP_HEAP, \1, HU_MEMNUM_OVL);",
+        c_file_content,
+    )
+    c_file_content = re.sub(
+        r"if \(_CheckFlag\(0x1000F\) == 0\) {\n\s*\(GwPlayer \+ \(([0-9a-zA-Z_]+) \* 0x108\)\)->unk_2C = ([0-9a-z_]+);\n\s*}",
+        r"GWMgCoinBonusSet(\1, \2);",
+        c_file_content,
+    )
+    c_file_content = re.sub(
+        r"\(GwPlayer \+ \(([0-9a-zA-Z_]+) \* 0x108\)\)->unk_2C",
+        r"GWMgCoinBonusGet(\1)",
+        c_file_content,
+    )
+    c_file_content = re.sub(
+        r"\(GwPlayer \+ \(([0-9a-zA-Z_]+) \* 0x108\)\)->unk_30 = ([0-9a-z_]+);",
+        r"GWMgScoreSet(\1, \2);",
+        c_file_content,
+    )
     c_file_content = re.sub(
         r"struct ([_0-9a-zA-Z]+) {([\s\S]*?\n)};",
         r"typedef struct \1 { \2 } \1;",
@@ -281,8 +316,9 @@ def interpret_file(asm_file: str, c_file: str) -> None:
     c_file_content = re.sub(r"\/\* switch \d+(; ?irregular)? \*\/", "", c_file_content)
     c_file_content = re.sub(r".*psq_l unimplemented.*\n", "", c_file_content)
 
-    # c_file_content = replace_attr_values(c_file_content)
-    # c_file_content = replace_wipe_values(c_file_content)
+    c_file_content = replace_attr_values(c_file_content)
+    c_file_content = replace_wipe_values(c_file_content)
+    c_file_content = replace_flag_values(c_file_content)
     # c_file_content = replace_make_num_values(c_file_content) # picks up too much
     c_file_content = replace_double_var_loops(c_file_content)
     c_file_content = replace_single_var_loops(c_file_content)
