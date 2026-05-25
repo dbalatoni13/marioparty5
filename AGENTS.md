@@ -149,6 +149,8 @@ The m2c output can often be missing case labels in switch statements which are n
 Most importantly: write code that a human would write. The original code was written by humans, so the closer your source is
 to natural C/C++, the more likely it is to match.
 
+Use `NULL` instead of `0` when dealing with pointers.
+
 DON'T ADD EXPLANATIVE TO THE CODE WHEN DECOMPILING other than the objdata and inline usage which you should also get rid of by the end.  
 
 DON'T LABEL things on your own, keep the original variable and member names.
