@@ -169,6 +169,15 @@ DON'T ADD EXPLANATIVE TO THE CODE WHEN DECOMPILING other than the objdata and in
 
 DON'T LABEL things on your own, keep the original variable and member names.
 
+Make sure to apply the macros from humath.h:
+```
+#define HuSin(x) sin(M_PI*(x)/180.0)
+#define HuCos(x) cos(M_PI*(x)/180.0)
+#define HuTan(x) tan(M_PI*(x)/180.0)
+
+#define HuAtan(y, x) (180.0*(atan2((y), (x)) / M_PI))
+```
+
 ### Final stages
 m2c auto-generates lots of struct definitions which are the same, you should get rid of the unnecessary/duplicate ones.
 
